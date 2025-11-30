@@ -14,17 +14,18 @@ local function tween(obj, info, props)
 end
 
 local function ripple(btn)
+    if not btn then return end
     local r = Instance.new("Frame")
     r.BackgroundTransparency = 0.6
     r.BackgroundColor3 = Color3.new(1,1,1)
     r.ZIndex = 10
-    r.Parent = btn
+    r.Parent = Instance.new("Frame", btn)
     Instance.new("UICorner", r).CornerRadius = UDim.new(1,0)
     local m = Players.LocalPlayer:GetMouse()
     r.Size = UDim2.new(0,0,0,0)
     r.Position = UDim2.new(0, m.X - btn.AbsolutePosition.X, 0, m.Y - btn.AbsolutePosition.Y)
     tween(r, {0.4, Enum.EasingStyle.Quart}, {Size = UDim2.new(3,0,3,0), Position = UDim2.new(0.5,0,0.5,0), BackgroundTransparency = 1})
-    task.delay(0.4, function() r:Destroy() end)
+    task.delay(0.4, function() if r and r.Parent then r:Destroy() end end)
 end
 
 local function saveConfig(name)
@@ -34,66 +35,62 @@ local function saveConfig(name)
 end
 
 local function loadConfig(name)
-    if isfile(ConfigFolder.."/"..name..".json") then
-        local success, data = pcall(function() return HttpService:JSONDecode(readfile(ConfigFolder.."/"..name..".json")) end)
-        if success then
-            for k, v in pairs(data) do
-                if Flags[k] then
-                    Flags[k].Value = v
-                    Flags[k].Callback(v)
-                end
+    if not isfile(ConfigFolder.."/"..name..".json") then return end
+    local success, data = pcall(function() return HttpService:JSONDecode(readfile(ConfigFolder.."/"..name..".json")) end)
+    if success then
+        for k, v in pairs(data) do
+            if Flags[k] then
+                Flags[k].Value = v
+                Flags[k].Callback(v)
             end
         end
     end
 end
 
-function LunarUI:MakeNotification(info)
-    info.Name = info.Name or "Notification"
-    info.Content = info.Content or ""
-    info.Duration = info.Duration or 5
+function LunarUI:MakeNotification(n)
+    n.Name = n.Name or "Notification"
+    n.Content = n.Content or ""
+    n.Duration = n.Duration or 5
 
-    local screen = Instance.new("ScreenGui")
-    screen.Parent = CoreGui
-    screen.ResetOnSpawn = false
+    local gui = Instance.new("ScreenGui", CoreGui)
+    gui.ResetOnSpawn = false
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0,340,0,80)
-    frame.Position = UDim2.new(1,20,1,-100)
-    frame.BackgroundColor3 = Color3.fromRGB(20,20,30)
-    frame.Parent = screen
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0,14)
-    local stroke = Instance.new("UIStroke", frame)
-    stroke.Color = Color3.fromRGB(0,180,255)
-    stroke.Transparency = 0.5
+    local f = Instance.new("Frame", gui)
+    f.Size = UDim2.new(0,340,0,80)
+    f.Position = UDim2.new(1,20,1,-100)
+    f.BackgroundColor3 = Color3.fromRGB(20,20,30)
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0,14)
+    local s = Instance.new("UIStroke", f)
+    s.Color = Color3.fromRGB(0,180,255)
+    s.Transparency = 0.5
 
-    local title = Instance.new("TextLabel", frame)
-    title.Text = info.Name
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 15
-    title.TextColor3 = Color3.new(1,1,1)
-    title.Size = UDim2.new(1,-20,0,30)
-    title.Position = UDim2.new(0,15,0,8)
-    title.BackgroundTransparency = 1
-    title.TextXAlignment = Enum.TextXAlignment.Left
+    local t = Instance.new("TextLabel", f)
+    t.Text = n.Name
+    t.Font = Enum.Font.GothamBold
+    t.TextSize = 15
+    t.TextColor3 = Color3.new(1,1,1)
+    t.Size = UDim2.new(1,-20,0,30)
+    t.Position = UDim2.new(0,15,0,8)
+    t.BackgroundTransparency = 1
+    t.TextXAlignment = "Left"
 
-    local content = Instance.new("TextLabel", frame)
-    content.Text = info.Content
-    content.Font = Enum.Font.Gotham
-    content.TextSize = 13
-    content.TextColor3 = Color3.fromRGB(200,200,200)
-    content.Size = UDim2.new(1,-30,0,30)
-    content.Position = UDim2.new(0,15,0,35)
-    content.BackgroundTransparency = 1
-    content.TextWrapped = true
-    content.TextXAlignment = Enum.TextXAlignment.Left
+    local c = Instance.new("TextLabel", f)
+    c.Text = n.Content
+    c.Font = Enum.Font.Gotham
+    c.TextSize = 13
+    c.TextColor3 = Color3.fromRGB(200,200,200)
+    c.Size = UDim2.new(1,-30,0,30)
+    c.Position = UDim2.new(0,15,0,35)
+    c.BackgroundTransparency = 1
+    c.TextWrapped = true
+    c.TextXAlignment = "Left"
 
-    tween(frame, {0.5, Enum.EasingStyle.Quint}, {Position = UDim2.new(1,-360,1,-100)})
-    task.wait(0.5)
-    tween(frame, {0.4, Enum.EasingStyle.Quart}, {Position = UDim2.new(1,-360,1,-100)})
-    task.wait(info.Duration)
-    tween(frame, {0.5}, {Position = UDim2.new(1,20,1,-100)})
+    tween(f, {0.5, Enum.EasingStyle.Quint}, {Position = UDim2.new(1,-360,1,-100)})
+    task.wait(n.Duration + 0.5)
+    tween(f, {0.5}, {Position = UDim2.new(1,20,1,-100)})
     task.wait(0.6)
-    screen:Destroy()
+    gui:Destroy()
 end
 
 function LunarUI:MakeWindow(winInfo)
@@ -125,6 +122,7 @@ function LunarUI:MakeWindow(winInfo)
     local Header = Instance.new("Frame", Main)
     Header.Size = UDim2.new(1,0,0,50)
     Header.BackgroundColor3 = Color3.fromRGB(14,14,22)
+    Header.Name = "Header"
     Instance.new("UICorner", Header).CornerRadius = UDim.new(0,18)
 
     local Title = Instance.new("TextLabel", Header)
@@ -149,22 +147,31 @@ function LunarUI:MakeWindow(winInfo)
         ScreenGui:Destroy()
     end)
 
-    local dragging, startPos, startMouse
-    Header.InputBegan:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then
+    -- DRAGGABLE (NOW 100% FIXED)
+    local dragging = false
+    local dragInput, dragStart, startPos
+    Header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
-            startMouse = i.Position
+            dragStart = input.Position
             startPos = Main.Position
         end
     end)
-    Header.InputChanged:Connect(function(i)
-        if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = i.Position - startMouse
+    Header.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            local delta = input.Position - dragStart
             Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    UserInputService.InputEnded:Connect(function(i)
-        if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
     end)
 
     local TabContainer = Instance.new("Frame", Main)
@@ -202,10 +209,11 @@ function LunarUI:MakeWindow(winInfo)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 3
         Page.Visible = false
-        Page.CanvasSize = UDim2.new(0,0,0,0)
+        Page.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
         local Layout = Instance.new("UIListLayout", Page)
         Layout.Padding = UDim.new(0,12)
+        Layout.SortOrder = Enum.SortOrder.LayoutOrder
         local Padding = Instance.new("UIPadding", Page)
         Padding.PaddingLeft = UDim.new(0,15)
         Padding.PaddingRight = UDim.new(0,15)
@@ -213,13 +221,13 @@ function LunarUI:MakeWindow(winInfo)
 
         Button.MouseButton1Click:Connect(function()
             ripple(Button)
-            if currentTab then
+            if currentTab and currentTab ~= Button then
                 tween(currentTab, {0.3}, {TextColor3 = Color3.fromRGB(170,170,190)})
-                tween(SelectorBar, {0.4, Enum.EasingStyle.Quint}, {Position = UDim2.new(0,8,0, Button.AbsolutePosition.Y - TabContainer.AbsolutePosition.Y + 3)})
             end
             currentTab = Button
             tween(Button, {0.3}, {TextColor3 = Color3.new(1,1,1)})
-            for _, p in Pages:GetChildren() do p.Visible = false end
+            tween(SelectorBar, {0.4, Enum.EasingStyle.Quint}, {Position = UDim2.new(0,8,0, Button.AbsolutePosition.Y - TabContainer.AbsolutePosition.Y + 3)})
+            for _, p in pairs(Pages:GetChildren()) do p.Visible = false end
             Page.Visible = true
         end)
 
@@ -247,7 +255,7 @@ function LunarUI:MakeWindow(winInfo)
             t.Size = UDim2.new(1,-20,0,30)
             t.Position = UDim2.new(0,10,0,5)
             t.BackgroundTransparency = 1
-            t.TextXAlignment = Enum.TextXAlignment.Left
+            t.TextXAlignment = "Left"
 
             local c = Instance.new("TextLabel", f)
             c.Text = info.Content or "Content"
@@ -258,85 +266,74 @@ function LunarUI:MakeWindow(winInfo)
             c.Position = UDim2.new(0,10,0,35)
             c.BackgroundTransparency = 1
             c.TextWrapped = true
-            c.TextXAlignment = Enum.TextXAlignment.Left
+            c.TextXAlignment = "Left"
         end
 
-        function Tab:AddLabel(text)
-            local l = Instance.new("TextLabel")
-            l.Size = UDim2.new(1,0,0,30)
-            l.BackgroundTransparency = 1
-            l.Text = text
-            l.Font = Enum.Font.Gotham
-            l.TextSize = 14
-            l.TextColor3 = Color3.new(1,1,1)
-            l.Parent = Page
-        end
-
-        function Tab:AddButton(info)
-            local b = Instance.new("TextButton")
-            b.Size = UDim2.new(1,0,0,46)
-            b.BackgroundColor3 = Color3.fromRGB(30,30,42)
-            b.Text = info.Name
-            b.Font = Enum.Font.Gotham
-            b.TextSize = 14
-            b.TextColor3 = Color3.new(1,1,1)
-            b.Parent = Page
-            Instance.new("UICorner", b).CornerRadius = UDim.new(0,12)
-            b.MouseButton1Click:Connect(function()
-                ripple(b)
-                task.spawn(info.Callback or function() end)
+        function Tab:AddButton(b)
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1,0,0,46)
+            btn.BackgroundColor3 = Color3.fromRGB(30,30,42)
+            btn.Text = b.Name or "Button"
+            btn.Font = Enum.Font.Gotham
+            btn.TextSize = 14
+            btn.TextColor3 = Color3.new(1,1,1)
+            btn.Parent = Page
+            Instance.new("UICorner", btn).CornerRadius = UDim.new(0,12)
+            btn.MouseButton1Click:Connect(function()
+                ripple(btn)
+                if b.Callback then task.spawn(b.Callback) end
             end)
         end
 
-        function Tab:AddToggle(info)
+        function Tab:AddToggle(t)
             local f = Instance.new("Frame")
             f.Size = UDim2.new(1,0,0,46)
             f.BackgroundColor3 = Color3.fromRGB(30,30,42)
             f.Parent = Page
             Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
 
-            local l = Instance.new("TextLabel", f)
-            l.Text = info.Name
-            l.Font = Enum.Font.Gotham
-            l.TextSize = 14
-            l.TextColor3 = Color3.new(1,1,1)
-            l.Size = UDim2.new(1,-70,1,0)
-            l.Position = UDim2.new(0,16,0,0)
-            l.BackgroundTransparency = 1
-            l.TextXAlignment = Enum.TextXAlignment.Left
+            local label = Instance.new("TextLabel", f)
+            label.Text = t.Name or "Toggle"
+            label.Font = Enum.Font.Gotham
+            label.TextSize = 14
+            label.TextColor3 = Color3.new(1,1,1)
+            label.Size = UDim2.new(1,-70,1,0)
+            label.Position = UDim2.new(0,16,0,0)
+            label.BackgroundTransparency = 1
+            label.TextXAlignment = "Left"
 
-            local s = Instance.new("Frame")
-            s.Size = UDim2.new(0,50,0,28)
-            s.Position = UDim2.new(1,-66,0.5,-14)
-            s.BackgroundColor3 = Color3.fromRGB(70,70,80)
-            s.Parent = f
-            Instance.new("UICorner", s).CornerRadius = UDim.new(0,14)
+            local switch = Instance.new("Frame")
+            switch.Size = UDim2.new(0,50,0,28)
+            switch.Position = UDim2.new(1,-66,0.5,-14)
+            switch.BackgroundColor3 = Color3.fromRGB(70,70,80)
+            switch.Parent = f
+            Instance.new("UICorner", switch).CornerRadius = UDim.new(0,14)
 
-            local c = Instance.new("Frame")
-            c.Size = UDim2.new(0,24,0,24)
-            c.Position = info.Default and UDim2.new(1,-28,0.5,-12) or UDim2.new(0,4,0.5,-12)
-            c.BackgroundColor3 = Color3.new(1,1,1)
-            c.Parent = s
-            Instance.new("UICorner", c).CornerRadius = UDim.new(1,0)
+            local circle = Instance.new("Frame")
+            circle.Size = UDim2.new(0,24,0,24)
+            circle.BackgroundColor3 = Color3.new(1,1,1)
+            circle.Parent = switch
+            Instance.new("UICorner", circle).CornerRadius = UDim.new(1,0)
 
-            local enabled = info.Default or false
-            if enabled then s.BackgroundColor3 = Color3.fromRGB(0,170,255) end
+            local enabled = t.Default or false
+            circle.Position = enabled and UDim2.new(1,-28,0.5,-12) or UDim2.new(0,4,0.5,-12)
+            switch.BackgroundColor3 = enabled and Color3.fromRGB(0,170,255) or Color3.fromRGB(70,70,80)
 
-            local flag = info.Flag or info.Name
-            Flags[flag] = {Value = enabled, Callback = info.Callback or function() end}
+            local flag = t.Flag or t.Name
+            Flags[flag] = {Value = enabled, Callback = t.Callback or function() end}
 
             f.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                     enabled = not enabled
                     Flags[flag].Value = enabled
-                    tween(s, {0.25}, {BackgroundColor3 = enabled and Color3.fromRGB(0,170,255) or Color3.fromRGB(70,70,80)})
-                    tween(c, {0.25}, {Position = enabled and UDim2.new(1,-28,0.5,-12) or UDim2.new(0,4,0.5,-12)})
-                    info.Callback(enabled)
+                    tween(switch, {0.25}, {BackgroundColor3 = enabled and Color3.fromRGB(0,170,255) or Color3.fromRGB(70,70,80)})
+                    tween(circle, {0.25}, {Position = enabled and UDim2.new(1,-28,0.5,-12) or UDim2.new(0,4,0.5,-12)})
+                    t.Callback(enabled)
                 end
             end)
         end
 
-        function Tab:AddSlider(info)
+        function Tab:AddSlider(s)
             local f = Instance.new("Frame")
             f.Size = UDim2.new(1,0,0,66)
             f.BackgroundColor3 = Color3.fromRGB(30,30,42)
@@ -344,17 +341,17 @@ function LunarUI:MakeWindow(winInfo)
             Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
 
             local l = Instance.new("TextLabel", f)
-            l.Text = info.Name
+            l.Text = s.Name or "Slider"
             l.Font = Enum.Font.Gotham
             l.TextSize = 14
             l.TextColor3 = Color3.new(1,1,1)
             l.Size = UDim2.new(1,-100,0,30)
             l.Position = UDim2.new(0,16,0,6)
             l.BackgroundTransparency = 1
-            l.TextXAlignment = Enum.TextXAlignment.Left
+            l.TextXAlignment = "Left"
 
             local v = Instance.new("TextLabel", f)
-            v.Text = tostring(info.Default or info.Min)
+            v.Text = tostring(s.Default or s.Min)
             v.Font = Enum.Font.GothamBold
             v.TextColor3 = Color3.fromRGB(0,170,255)
             v.Size = UDim2.new(0,80,0,30)
@@ -369,7 +366,7 @@ function LunarUI:MakeWindow(winInfo)
             Instance.new("UICorner", bar).CornerRadius = UDim.new(0,4)
 
             local fill = Instance.new("Frame")
-            fill.Size = UDim2.new((info.Default-info.Min)/(info.Max-info.Min),0,1,0)
+            fill.Size = UDim2.new((s.Default-s.Min)/(s.Max-s.Min),0,1,0)
             fill.BackgroundColor3 = Color3.fromRGB(0,170,255)
             fill.Parent = bar
             Instance.new("UICorner", fill).CornerRadius = UDim.new(0,4)
@@ -383,25 +380,29 @@ function LunarUI:MakeWindow(winInfo)
             Instance.new("UICorner", knob).CornerRadius = UDim.new(1,0)
 
             local dragging = false
-            local flag = info.Flag or info.Name
-            Flags[flag] = {Value = info.Default, Callback = info.Callback or function() end}
+            local flag = s.Flag or s.Name
+            Flags[flag] = {Value = s.Default, Callback = s.Callback or function() end}
 
-            bar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-            UserInputService.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+            bar.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+            end)
+            UserInputService.InputEnded:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+            end)
             UserInputService.InputChanged:Connect(function(i)
                 if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then
                     local rel = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1)
-                    local val = info.Min + (info.Max - info.Min) * rel
+                    local val = s.Min + (s.Max - s.Min) * rel
                     fill.Size = UDim2.new(rel,0,1,0)
                     knob.Position = UDim2.new(rel,0,0.5,0)
-                    v.Text = tostring(math.floor(val))
+                    v.Text = tostring(math.floor(val + 0.5))
                     Flags[flag].Value = val
-                    info.Callback(val)
+                    s.Callback(val)
                 end
             end)
         end
 
-        function Tab:AddDropdown(info)
+        function Tab:AddDropdown(d)
             local container = Instance.new("Frame")
             container.Size = UDim2.new(1,0,0,46)
             container.BackgroundColor3 = Color3.fromRGB(30,30,42)
@@ -409,23 +410,23 @@ function LunarUI:MakeWindow(winInfo)
             Instance.new("UICorner", container).CornerRadius = UDim.new(0,12)
 
             local label = Instance.new("TextLabel", container)
-            label.Text = info.Name
+            label.Text = d.Name or "Dropdown"
             label.Font = Enum.Font.Gotham
             label.TextSize = 14
             label.TextColor3 = Color3.new(1,1,1)
             label.Size = UDim2.new(1,-140,1,0)
             label.Position = UDim2.new(0,16,0,0)
             label.BackgroundTransparency = 1
-            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.TextXAlignment = "Left"
 
             local selected = Instance.new("TextLabel", container)
-            selected.Text = info.Options[1] or "None"
+            selected.Text = d.Options[1] or "Select"
             selected.Font = Enum.Font.GothamBold
             selected.TextColor3 = Color3.fromRGB(0,170,255)
             selected.Size = UDim2.new(0,120,1,0)
-            selected.Position = UDim2 Oost.new(1,-140,0,0)
+            selected.Position = UDim2.new(1,-140,0,0)
             selected.BackgroundTransparency = 1
-            selected.TextXAlignment = Enum.TextXAlignment.Right
+            selected.TextXAlignment = "Right"
 
             local arrow = Instance.new("TextLabel", container)
             arrow.Text = "v"
@@ -440,27 +441,29 @@ function LunarUI:MakeWindow(winInfo)
             list.Position = UDim2.new(0,16,1,8)
             list.BackgroundColor3 = Color3.fromRGB(26,26,38)
             list.Visible = false
+            list.ClipsDescendants = true
             list.Parent = container
             Instance.new("UICorner", list).CornerRadius = UDim.new(0,12)
             local listLayout = Instance.new("UIListLayout", list)
             listLayout.Padding = UDim.new(0,4)
 
             local open = false
-            local height = #info.Options * 40 + 16
-            local flag = info.Flag or info.Name
-            Flags[flag] = {Value = selected.Text, Callback = info.Callback or function() end}
+            local height = #d.Options * 40 + 16
+            local flag = d.Flag or d.Name
+            Flags[flag] = {Value = selected.Text, Callback = d.Callback or function() end}
 
-            for _, opt in ipairs(info.Options) do
+            for _, opt in ipairs(d.Options) do
                 local btn = Instance.new("TextButton", list)
                 btn.Size = UDim2.new(1,0,0,40)
                 btn.BackgroundTransparency = 1
                 btn.Text = "   "..opt
                 btn.TextColor3 = Color3.fromRGB(200,200,220)
-                btn.TextXAlignment = Enum.TextXAlignment.Left
+                btn.TextXAlignment = "Left"
+                btn.Font = Enum.Font.Gotham
                 btn.MouseButton1Click:Connect(function()
                     selected.Text = opt
                     Flags[flag].Value = opt
-                    info.Callback(opt)
+                    d.Callback(opt)
                     open = false
                     tween(arrow, {0.3}, {Rotation = 0})
                     tween(container, {0.5, Enum.EasingStyle.Quint}, {Size = UDim2.new(1,0,0,46)})
@@ -471,7 +474,7 @@ function LunarUI:MakeWindow(winInfo)
             end
 
             container.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
                     open = not open
                     list.Visible = true
                     if open then
@@ -487,7 +490,7 @@ function LunarUI:MakeWindow(winInfo)
             end)
         end
 
-        function Tab:AddKeybind(info)
+        function Tab:AddKeybind(k)
             local f = Instance.new("Frame")
             f.Size = UDim2.new(1,0,0,46)
             f.BackgroundColor3 = Color3.fromRGB(30,30,42)
@@ -495,17 +498,17 @@ function LunarUI:MakeWindow(winInfo)
             Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
 
             local l = Instance.new("TextLabel", f)
-            l.Text = info.Name
+            l.Text = k.Name or "Keybind"
             l.Font = Enum.Font.Gotham
             l.TextSize = 14
             l.TextColor3 = Color3.new(1,1,1)
             l.Size = UDim2.new(1,-100,1,0)
             l.Position = UDim2.new(0,16,0,0)
             l.BackgroundTransparency = 1
-            l.TextXAlignment = Enum.TextXAlignment.Left
+            l.TextXAlignment = "Left"
 
             local bind = Instance.new("TextButton", f)
-            bind.Text = info.Default and info.Default.Name or "None"
+            bind.Text = k.Default and k.Default.Name or "None"
             bind.Font = Enum.Font.GothamBold
             bind.TextColor3 = Color3.fromRGB(0,170,255)
             bind.Size = UDim2.new(0,80,0,30)
@@ -524,12 +527,12 @@ function LunarUI:MakeWindow(winInfo)
                 if listening and i.KeyCode ~= Enum.KeyCode.Unknown then
                     bind.Text = i.KeyCode.Name
                     listening = false
-                    info.Callback(i.KeyCode)
+                    if k.Callback then k.Callback(i.KeyCode) end
                 end
             end)
         end
 
-        function Tab:AddTextbox(info)
+        function Tab:AddColorpicker(c)
             local f = Instance.new("Frame")
             f.Size = UDim2.new(1,0,0,46)
             f.BackgroundColor3 = Color3.fromRGB(30,30,42)
@@ -537,7 +540,43 @@ function LunarUI:MakeWindow(winInfo)
             Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
 
             local l = Instance.new("TextLabel", f)
-            l.Text = info.Name
+            l.Text = c.Name or "Color"
+            l.Font = Enum.Font.Gotham
+            l.TextSize = 14
+            l.TextColor3 = Color3.new(1,1,1)
+            l.Size = UDim2.new(1,-70,1,0)
+            l.Position = UDim2.new(0,16,0,0)
+            l.BackgroundTransparency = 1
+            l.TextXAlignment = "Left"
+
+            local preview = Instance.new("Frame")
+            preview.Size = UDim2.new(0,34,0,34)
+            preview.Position = UDim2.new(1,-50,0.5,-17)
+            preview.BackgroundColor3 = c.Default or Color3.fromRGB(255,0,0)
+            preview.Parent = f
+            Instance.new("UICorner", preview).CornerRadius = UDim.new(0,8)
+            local stroke = Instance.new("UIStroke", preview)
+            stroke.Color = Color3.fromRGB(100,100,100)
+
+            preview.InputBegan:Connect(function(i)
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    local hue = tick() % 1
+                    local color = Color3.fromHSV(hue, 1, 1)
+                    preview.BackgroundColor3 = color
+                    if c.Callback then c.Callback(color) end
+                end
+            end)
+        end
+
+        function Tab:AddTextbox(t)
+            local f = Instance.new("Frame")
+            f.Size = UDim2.new(1,0,0,46)
+            f.BackgroundColor3 = Color3.fromRGB(30,30,42)
+            f.Parent = Page
+            Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
+
+            local l = Instance.new("TextLabel", f)
+            l.Text = t.Name or "Textbox"
             l.Font = Enum.Font.Gotham
             l.TextSize = 14
             l.TextColor3 = Color3.new(1,1,1)
@@ -546,55 +585,16 @@ function LunarUI:MakeWindow(winInfo)
             l.BackgroundTransparency = 1
 
             local box = Instance.new("TextBox", f)
-            box.PlaceholderText = info.Placeholder or "Enter text..."
-            box.Text = info.Default or ""
+            box.PlaceholderText = t.Placeholder or "Enter text..."
+            box.Text = t.Default or ""
             box.Size = UDim2.new(0,200,0,30)
             box.Position = UDim2.new(1,-216,0.5,-15)
             box.BackgroundColor3 = Color3.fromRGB(40,40,55)
             Instance.new("UICorner", box).CornerRadius = UDim.new(0,8)
             box.FocusLost:Connect(function()
-                info.Callback(box.Text)
+                if t.Callback then t.Callback(box.Text) end
             end)
         end
-
-        function Tab:AddColorpicker(info)
-            local f = Instance.new("Frame")
-            f.Size = UDim2.new(1,0,0,46)
-            f.BackgroundColor3 = Color3.fromRGB(30,30,42)
-            f.Parent = Page
-            Instance.new("UICorner", f).CornerRadius = UDim.new(0,12)
-
-            local l = Instance.new("TextLabel", f)
-            l.Text = info.Name
-            l.Font = Enum.Font.Gotham
-            l.TextSize = 14
-            l.TextColor3 = Color3.new(1,1,1)
-            l.Size = UDim2.new(1,-70,1,0)
-            l.Position = UDim2.new(0,16,0,0)
-            l.BackgroundTransparency = 1
-            l.TextXAlignment = Enum.TextXAlignment.Left
-
-            local preview = Instance.new("Frame")
-            preview.Size = UDim2.new(0,34,0,34)
-            preview.Position = UDim2.new(1,-50,0.5,-17)
-            preview.BackgroundColor3 = info.Default or Color3.fromRGB(255,0,0)
-            preview.Parent = f
-            Instance.new("UICorner", preview).CornerRadius = UDim.new(0,8)
-            Instance.new("UIStroke", preview).Color = Color3.fromRGB(100,100,100)
-
-            preview.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then
-                    local hue = tick() % 1
-                    local color = Color3.fromHSV(hue, 1, 1)
-                    preview.BackgroundColor3 = color
-                    info.Callback(color)
-                end
-            end)
-        end
-
-        Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            Page.CanvasSize = UDim2.new(0,0,0,Layout.AbsoluteContentSize.Y + 30)
-        end)
 
         return Tab
     end
@@ -602,21 +602,18 @@ function LunarUI:MakeWindow(winInfo)
     Main.Size = UDim2.new(0,0,0,0)
     tween(Main, {0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out}, {Size = UDim2.new(0,620,0,420)})
 
-    UserInputService.InputBegan:Connect(function(i)
+    UserInputService.InputBegan:Connect(function(i, gp)
+        if gp then return end
         if i.KeyCode == Enum.KeyCode.RightShift then
             Main.Visible = not Main.Visible
-            if Main.Visible then
-                tween(Main, {0.4}, {Size = UDim2.new(0,620,0,420)})
-            else
-                tween(Main, {0.4}, {Size = UDim2.new(0,0,0,0)})
-            end
+            tween(Main, {0.4}, {Size = Main.Visible and UDim2.new(0,620,0,420) or UDim2.new(0,0,0,0)})
         end
     end)
 
     if winInfo.SaveConfig then
         loadConfig(winInfo.ConfigName)
         task.spawn(function()
-            while task.wait(5) do
+            while task.wait(3) do
                 saveConfig(winInfo.ConfigName)
             end
         end)
